@@ -10,11 +10,10 @@ def sigmoid(x):
 def getResourcesPath():
     return os.path.abspath(os.path.join(os.path.dirname( __file__ ), os.pardir, 'resources'))
 
-def readTrainModel(filePath):
-    #TODO: generalize numInput and outPut
+def readTrainModel(filePath, numOutputs = 1):
     f = open(filePath, 'r')
     res = []
     for line in f:
         sLine = list(map(float, line.strip().split(" ")))
-        res.append(((sLine[:-1]), sLine[-1:]))
+        res.append(((sLine[:-numOutputs]), sLine[-numOutputs:]))
     return res
