@@ -1,55 +1,57 @@
-from pip._vendor.requests.packages.urllib3.connectionpool import xrange
 from util import utils
+import math
 import random
 
 class Perceptron(object):
     '''
     Basic implementation of a one-layer neural network (perceptron)
     '''
-    useStepFunction = False
+    useStepFunction = False  #basic behavior uses sigmoid 
     learningRate = 0.1
-    t_session = 200    #max number of training session for learning
+    t_sessions = 200    #max number of training session for learning
     threshold = 0.5
-    '''
-    For the bias there exist two different approaches: 
-        1. consider it as a weight (and fixed input with value 1)
-            1.1 Ask always as an input (with value 1)
-            1.2 Make transparent to "user"
-        2. use as the bias to compute fire function. 
-            learn rule: b = b + error 
-    '''
     bias = 0.0
 
     def __init__(self, numInputs):
         self.numInputs = numInputs
-        self.weights = [random.uniform(-2.0, 2.0)] * numInputs 
+        self.weights = [random.uniform(-0.05, 0.05)] * numInputs #??best values
+        #self.weights = [0.0] * numInputs 
         
     def learn(self, t_model):
-        for _ in xrange(self.t_session):
+        #check model validity
+        for t_inputs, t_outputs in t_model:
+            if len(t_inputs) != self.numInputs:
+                raise Exception("t_model, wrong number of inputs")
+        
+        for _ in range(self.t_sessions):
             errorCount = 0
+            #print(self.getError(t_model))
             for t_inputs, t_outputs in t_model:
-                #print(self.weights)
-                #print(self.bias)
-                res = self.getOutput(t_inputs)
-                error = t_outputs[0] - res
-                if error != 0:
+                #outputs treated as list for reuse of t_models
+                error = t_outputs[0] - self.getOutput(t_inputs)
+                if error != 0:                    
                     errorCount += 1
-                    #self.bias += error
-                    self.bias += self.learningRate * error * 1
+                    self.bias += self.learningRate * error #??lr required
                     for i, t_input in enumerate(t_inputs):
-                        if i >= self.numInputs:
-                            break
                         self.weights[i] += self.learningRate * error * t_input
             if errorCount == 0:
                 break
 
     def getOutput(self, inputs):
-        value = utils.dotProduct(inputs, self.weights)
-        bValue = value + (self.bias * 1)
-        #return (value + self.bias) > self.threshold
+        if len(inputs) != self.numInputs:
+            raise Exception("Wrong number of inputs")
+        
+        y = utils.dotProduct(inputs + [1], self.weights + [self.bias])
         if self.useStepFunction:
-            return bValue > self.threshold
+            return y > self.threshold
         else:
-            return utils.sigmoid(bValue)   
+            return utils.sigmoid(y) 
+        
+    def getError(self, t_model):
+        g_error = 0
+        for t_inputs, t_outputs in t_model:
+            l_error = t_outputs[0] - self.getOutput(t_inputs)
+            g_error += math.pow(l_error, 2)
+        return (g_error)/2
         
         

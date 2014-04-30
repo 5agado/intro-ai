@@ -1,4 +1,5 @@
 import random
+import operator
 from bitstring import BitArray
 
 class Population(object):
@@ -7,27 +8,37 @@ class Population(object):
     methods
     '''
     crossover_rate = 0.7
-    mutation_rate = 0.001
+    mutation_rate = 0.01
     generation_num = 0
+    elites_num = 2 #best if even for the newGeneration process
 
     def __init__(self, size = 0, chromoSize = 0):
         self.chromoSize = chromoSize
+        self.size = size
         self.chromos = [self.Chromo(chromoSize) for _ in range(size)]
-        
-    def randomInitPopulation(self, geneLength, mivVal, maxVal):
-        for i in range(len(self.chromos)):
-            for j in range(self.chromoSize):
-                self.chromos[i].genes[j] = (
-                    BitArray(int=random.randint(mivVal, maxVal), length=geneLength))
+    
+    def initPopulation(self):
+        raise NotImplementedError()
+    
+    '''
+    Should define the evaluation of each hypothesis and relative
+    fitness assignment. The newGeneration method can then be called
+    '''
+    def evolve(self):
+        raise NotImplementedError()
              
     def newGeneration(self):
-        newGen = []
+        #elitarism
+        newGen = self.getBestIndividuals(self.elites_num)
         
-        for _ in range(len(self.chromos)//2):
+        while len(newGen) < self.size:
+            g_len = [None] * self.chromoSize #lengths of a chromo genes
+            
             #trasform to single bit array
             c1 = self.rouletteSelection()
             offspring1 = BitArray()
-            for gene in c1.genes:
+            for i, gene in enumerate(c1.genes):
+                g_len[i] = len(gene)
                 offspring1.append(gene)
                 
             c2 = self.rouletteSelection()
@@ -39,18 +50,21 @@ class Population(object):
             self.mutate(offspring1)
             self.mutate(offspring2)
             
-            #return to array of bit arrays
-            
+            #return to array of bit arrays            
             newC1 = self.Chromo(self.chromoSize)
             newC1genes = []
+            lim = 0
             for i in range(self.chromoSize):
-                newC1genes.append(offspring1[(i*21):((i+1)*21)])
+                newC1genes.append(offspring1[(lim):(lim + g_len[i])])
+                lim += g_len[i]
             newC1.genes = newC1genes
             
             newC2 = self.Chromo(self.chromoSize)
             newC2genes = []
+            lim = 0
             for i in range(self.chromoSize):
-                newC2genes.append(offspring2[(i*21):((i+1)*21)])
+                newC2genes.append(offspring2[(lim):(lim + g_len[i])])
+                lim += g_len[i]
             newC2.genes = newC2genes
                 
             
@@ -78,7 +92,6 @@ class Population(object):
     def crossover(self, offspring1, offspring2):
         if random.uniform(0, 1) < self.crossover_rate:
             p = random.choice(range(len(offspring1)))
-            #print(p)
             for i in range(p, len(offspring1)):
                 offspring1[i], offspring2[i] = offspring2[i], offspring1[i]  
                 
@@ -93,9 +106,15 @@ class Population(object):
             total += chromo.fitness
         return total
     
+    def getBestIndividuals(self, numIndividuals = 1):
+        sorted_pop = sorted(self.chromos, key=operator.attrgetter('fitness'), reverse=True)
+        return sorted_pop[:numIndividuals]
+    
     class Chromo(object):
         '''
         The basic unit of the genetic population.
+        A chromo is composed by different genes that together 
+        encode a possible solution to the problem
         '''
 
         def __init__(self, size):
