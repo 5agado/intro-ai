@@ -14,7 +14,7 @@ Simple maze game.
 The maze is encoded as a matrix of int
 '''
 
-square_l = 10
+square_l = 30
 start = None
 end = None
 

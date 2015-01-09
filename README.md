@@ -4,7 +4,7 @@ Intro AI
 Sample code for various introductory concepts of artificial intelligence,
 plus some test code for related challenges on [Hackerrank].
 
-[Hackerrank]http://www.hackerrank.com/categories/ai/introduction
+[Hackerrank]: http://www.hackerrank.com/categories/ai/introduction
 
 ## License
 
